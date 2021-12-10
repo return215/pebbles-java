@@ -2,7 +2,7 @@ package xyz.return215.app.pebbles;
 
 import org.apache.commons.cli.*;
 
-public class Server {
+public class PebblesServer {
 
     private static CommandLineParser clp;
     private static HelpFormatter hf;
@@ -14,7 +14,7 @@ public class Server {
     /** Default server port. It is the T9 of "dakon". */
     private static final int DEFAULT_PORT = 32566;    
     private static final String CMD_SYNTAX = 
-	    Server.class.getSimpleName();
+	    PebblesServer.class.getSimpleName();
 
     public static void main(String[] args) {
 	// TODO Auto-generated method stub
