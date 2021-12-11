@@ -52,7 +52,8 @@ public class PebblesClient {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         ) {
-            String remoteHost = ServerUtil.hostPortString(clientSocket.getInetAddress().toString(), clientSocket.getPort());
+            String remoteHost = ServerUtil.hostPortString(clientSocket.getInetAddress().getHostAddress(),
+                    clientSocket.getPort());
             System.out.println("Connected to server on " + remoteHost + ".");
             
             String inputLine;
@@ -62,12 +63,10 @@ public class PebblesClient {
                 System.out.println(in.readLine());
             }
         } catch (UnknownHostException uhe) {
-            System.err.println("Cannot find server host " + hostText);
-            System.err.println(uhe.getMessage());
+            System.err.println("Cannot find server host " + hostText + ": " + uhe.getMessage());
             System.exit(1);
         } catch (IOException ie) {
-            System.err.println("Error reading from " + hostText);
-            System.err.println(ie.getMessage());
+            System.err.println("Error reading from " + hostText + ": " + ie.getMessage());
             System.exit(1);
         }
     }

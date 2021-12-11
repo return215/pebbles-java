@@ -1,11 +1,7 @@
 package xyz.return215.app.pebbles;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -15,7 +11,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import xyz.return215.app.pebbles.util.ServerUtil;
+import xyz.return215.app.pebbles.server.PebblesServerThread;
 
 public class PebblesServer {
     
@@ -41,25 +37,18 @@ public class PebblesServer {
         }
         
         port = (cmd.hasOption("p")) ? Integer.valueOf(cmd.getOptionValue("p")) : DEFAULT_PORT;
-        System.out.println("Listening for a client on port " + port + "...");
+        System.out.println("Listening for clients on port " + port + "...");
         
         try (
             ServerSocket serverSocket = new ServerSocket(port);
-            Socket clientSocket = serverSocket.accept();
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         ) {
-            String remoteHost = ServerUtil.hostPortString(clientSocket.getInetAddress().toString(), clientSocket.getPort());
-            System.out.println("Connected to client on " + remoteHost + ".");
-            
-            String inputLine;
-            
-            while ((inputLine = in.readLine()) != null) {
-                out.println(inputLine);
+            while (true) {
+                // When a client connects, create a new thread
+                new PebblesServerThread(serverSocket.accept()).start();
             }
         } catch (IOException ie) {
-            System.err.println("Error reading from port " + port);
-            System.err.println(ie.getMessage());
+            System.err.println("Error listening on port " + port + ":\n" + ie.getMessage());
+            ie.printStackTrace();
             System.exit(1);
         }
         
