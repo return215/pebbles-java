@@ -8,6 +8,22 @@ public class Game {
      * The player of the game
      */
     private Player player1, player2;
+    
+    /**
+     * @return the player1
+     */
+    public final Player getPlayer1() { return player1; }
+    
+    /**
+     * @return the player2
+     */
+    public final Player getPlayer2() { return player2; }
+    
+    /**
+     * @return the state
+     */
+    public final GameState getState() { return state; }
+    
     private GameState state;
     
     /**
@@ -32,25 +48,44 @@ public class Game {
         // playerTwoPlays = true;
         
         Game game = new Game(new Player(p1name), new Player(p2name),
-                GameState.initState(7, 7, playerTwoPlays));
+                GameState.initState(4, 5, playerTwoPlays));
         
-        while (game.state.getPhase() != GameStatePhase.OVER) {
-            playerTwoPlays = game.state.isCurrentlyPlayerTwo();
-            System.out.println(game.state.getStateText());
-            System.out.println(game.state.getAllPlayersBoardText());
-            if (game.state.getPhase() == GameStatePhase.WAITING) {
+        Player p1 = game.getPlayer1();
+        Player p2 = game.getPlayer2();
+        GameState state = game.getState();
+        
+        while (state.getPhase() != GameStatePhase.OVER) {
+            playerTwoPlays = state.isCurrentlyPlayerTwo();
+            System.out.println("Current turn: "
+                    + (playerTwoPlays ? p2.getUsername() : p1.getUsername()));
+            System.out.println(state.getStateText());
+            System.out.println(state.getAllPlayersBoardText());
+            if (state.getPhase() == GameStatePhase.WAITING) {
                 int index = stdin.nextInt();
                 try {
-                game.state.playerSelectPit(playerTwoPlays, index);
+                    state.playerSelectPit(playerTwoPlays, index);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
             } else {
-                game.state.tickPhase();
+                state.tickPhase();
             }
         }
-        System.out.println(game.state.getStateText());
-        System.out.println(game.state.getAllPlayersBoardText());
+        System.out.println(state.getStateText());
+        System.out.println(state.getAllPlayersBoardText());
+        
+        int p1score = state.getPlayerHomePot(false);
+        int p2score = state.getPlayerHomePot(true);
+        
+        int diff = (p1score - p2score);
+        
+        if (diff < 0) {
+            System.out.println(p2.getUsername() + " wins by " + (-diff));
+        } else if (diff > 0) {
+            System.out.println(p1.getUsername() + " wins by " + diff);
+        } else {
+            System.out.println("Round draw.");
+        }
         
         stdin.close();
     }

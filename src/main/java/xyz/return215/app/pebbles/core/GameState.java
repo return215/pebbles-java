@@ -1,11 +1,10 @@
 package xyz.return215.app.pebbles.core;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Pebbles Game State
@@ -22,7 +21,7 @@ public class GameState implements Serializable {
      */
     private static final long serialVersionUID = 2428215208939688078L;
     
-    private int[] pits;
+    private int pits[];
     protected int pitCount;
     protected int playerPitCount;
     protected int totalPitCount;
@@ -128,6 +127,21 @@ public class GameState implements Serializable {
         return new GameState(pitCount, initValue, startPlayerTwo);
     }
     
+    public static GameState flipState(GameState state) {
+        // flip pits, cursor, currentlyPlayerTwo
+        List<Integer> newPitL = new ArrayList<Integer>();
+        for (int i = 0; i < state.playerPitCount; i++) {
+            Collections.swap(newPitL, i, i + state.playerPitCount);
+        }
+        int[] newPit = newPitL.stream().mapToInt(Integer::intValue).toArray();
+        int newCursor = (state.cursor < state.playerPitCount)
+                ? state.cursor + state.playerPitCount
+                : state.cursor - state.playerPitCount;
+        return new GameState(newPit, state.pitCount, state.playerPitCount,
+                state.totalPitCount, state.onHand, newCursor,
+                !state.currentlyPlayerTwo, state.phase);
+    }
+    
     /****************************
      * UTILITY INSTANCE METHODS
      ***************************
@@ -167,7 +181,7 @@ public class GameState implements Serializable {
     
     public int getCrossPit(boolean isPlayerTwo, int pit) {
         return getPlayerPitPos(!isPlayerTwo,
-                isPlayerTwo ? pit - pitCount - 1 : pitCount - pit - 1);
+                isPlayerTwo ? 2 * pitCount - pit : pitCount - pit - 1);
     }
     
     /**
@@ -194,8 +208,8 @@ public class GameState implements Serializable {
      * Get pit position from player's relative position
      * 
      * @param isPlayerTwo
-     * @param pit
-     * @return
+     * @param pit         Pit position relative to the player
+     * @return Global pit position
      */
     public int getPlayerPitPos(boolean isPlayerTwo, int pit) {
         return isPlayerTwo ? playerPitCount + pit : pit;
@@ -235,6 +249,7 @@ public class GameState implements Serializable {
         s.append("]");
         return s.toString();
     }
+    
     public String getAllPlayersBoardText() {
         return getPlayerBoardText(currentlyPlayerTwo) + "\n"
                 + getPlayerBoardTextReverse(!currentlyPlayerTwo) + "\n";
