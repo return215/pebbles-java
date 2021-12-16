@@ -180,8 +180,7 @@ public class GameState implements Serializable {
     }
     
     public int getCrossPit(boolean isPlayerTwo, int pit) {
-        return getPlayerPitPos(!isPlayerTwo,
-                isPlayerTwo ? 2 * pitCount - pit : pitCount - pit - 1);
+        return 2 * pitCount - pit;
     }
     
     /**
@@ -293,6 +292,18 @@ public class GameState implements Serializable {
         return this;
     }
     
+    private GameState nextOrEnd(boolean nextOpponent) {
+        if (isGameOver()) {
+            phase = GameStatePhase.ENDING;
+        } else {
+            // next turn
+            phase = GameStatePhase.WAITING;
+            if (nextOpponent)
+                currentlyPlayerTwo = !currentlyPlayerTwo;
+        }
+        return this;
+    }
+    
     public GameState playerSelectPit(boolean isPlayerTwo, int localPit) {
         if (localPit >= pitCount) {
             throw new IllegalArgumentException(
@@ -319,49 +330,33 @@ public class GameState implements Serializable {
             if (onHand == 0) {
                 if (cursor == getPlayerHomePotPos(currentlyPlayerTwo)) {
                     // another turn
-                    if (isGameOver()) {
-                        phase = GameStatePhase.ENDING;
-                    } else {
-                        phase = GameStatePhase.WAITING;
-                    }
+                    nextOrEnd(false);
                 } else if (!isHomePot(cursor) && pits[cursor] == 1) {
                     if (isOwnPit(currentlyPlayerTwo, cursor)) {
                         phase = GameStatePhase.CAPTURING;
                     } else {
-                        if (isGameOver()) {
-                            phase = GameStatePhase.ENDING;
-                        } else {
-                            // next turn
-                            phase = GameStatePhase.WAITING;
-                            currentlyPlayerTwo = !currentlyPlayerTwo;
-                        }
+                        nextOrEnd(true);
                     }
                 } else {
                     selectPit(currentlyPlayerTwo, cursor);
                 }
-                break;
+            } else {
+                if (cursor == getPlayerHomePotPos(!currentlyPlayerTwo)) {
+                    incrementCursor();
+                }
+                pits[cursor]++;
+                onHand--;
+                // further empty checks are done in next tick
+                if (onHand != 0)
+                    incrementCursor();
             }
-            if (cursor == getPlayerHomePotPos(!currentlyPlayerTwo)) {
-                incrementCursor();
-            }
-            pits[cursor]++;
-            onHand--;
-            // further empty checks are done in next tick
-            if (onHand != 0)
-                incrementCursor();
         break;
         case CAPTURING:
             int crossPit = getCrossPit(currentlyPlayerTwo, cursor);
             int homePos = getPlayerHomePotPos(currentlyPlayerTwo);
             pits[homePos] += pits[cursor] + pits[crossPit];
             pits[cursor] = pits[crossPit] = 0;
-            if (isGameOver()) {
-                phase = GameStatePhase.ENDING;
-            } else {
-                // next turn
-                phase = GameStatePhase.WAITING;
-                currentlyPlayerTwo = !currentlyPlayerTwo;
-            }
+            nextOrEnd(true);
         break;
         case ENDING:
             cursor = 0;
