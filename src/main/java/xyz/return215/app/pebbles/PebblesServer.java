@@ -2,6 +2,7 @@ package xyz.return215.app.pebbles;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -11,7 +12,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import xyz.return215.app.pebbles.server.PebblesServerThread;
+import xyz.return215.app.pebbles.server.ServerHandler;
+import xyz.return215.app.pebbles.server.ServerThread;
+import xyz.return215.app.pebbles.util.ServerUtil;
 
 public class PebblesServer {
     
@@ -22,9 +25,10 @@ public class PebblesServer {
     
     private static int port;
     
-    /** Default server port. It is the T9 of "dakon". */
-    private static final int DEFAULT_PORT = 32566;
-    private static final String CMD_SYNTAX = PebblesServer.class.getSimpleName();
+    private static final String CMD_SYNTAX = PebblesServer.class
+            .getSimpleName();
+    
+    private ArrayList<ServerThread> clients = new ArrayList<>();
     
     public static void main(String[] args) {
         
@@ -32,33 +36,35 @@ public class PebblesServer {
             cmd = parseArguments(args);
         } catch (ParseException e) {
             System.err.println(e.getMessage());
-            hf.printHelp(CMD_SYNTAX, opts, true);
+            showHelp();
             System.exit(2);
         }
         
-        port = (cmd.hasOption("p")) ? Integer.valueOf(cmd.getOptionValue("p")) : DEFAULT_PORT;
-        System.out.println("Listening for clients on port " + port + "...");
-        
-        try (
-            ServerSocket serverSocket = new ServerSocket(port);
-        ) {
-            while (true) {
-                // When a client connects, create a new thread
-                new PebblesServerThread(serverSocket.accept()).start();
-            }
-        } catch (IOException ie) {
-            System.err.println("Error listening on port " + port + ":\n" + ie.getMessage());
-            ie.printStackTrace();
-            System.exit(1);
+        // check for help
+        if (cmd.hasOption("h")) {
+            showHelp();
+            System.exit(0);
         }
         
+        port = (cmd.hasOption("p")) ? Integer.valueOf(cmd.getOptionValue("p"))
+                : ServerUtil.DEFAULT_PORT;
+        
+        // start server handler
+        new ServerHandler(port);
     }
     
-    public static CommandLine parseArguments(String[] args) throws ParseException {
-        Option p = Option.builder("p").longOpt("port").argName("port_num").desc("Port to bind").hasArg().required(false)
-                .build();
+    public static void showHelp() { hf.printHelp(CMD_SYNTAX, opts, true); }
+    
+    public static CommandLine parseArguments(String[] args)
+            throws ParseException {
+        Option p = Option.builder("p").longOpt("port").argName("port_num")
+                .desc("Port to bind").hasArg().required(false).build();
+        
+        Option h = Option.builder("h").longOpt("help").desc("Show this help message")
+                .hasArg(false).required(false).build();
         
         opts.addOption(p);
+        opts.addOption(h);
         
         return clp.parse(opts, args, false);
     }

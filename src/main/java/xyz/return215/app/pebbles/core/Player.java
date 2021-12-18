@@ -8,22 +8,32 @@ public class Player implements Serializable {
      */
     private static final long serialVersionUID = -3468647621762468543L;
 
-    protected String username;
+    protected final String username;
     private int winCount = 0;
     private int plays = 0;
     private int winStreak = 0;
+    
+    private static final String cleanRegex = "[^\\w\\d\\.]+";
     
     /**
      * Create a new player
      * 
      * @param username
      */
-    public Player(String username) { this.username = username; }
+    public Player(String username) { this.username = sanitizeUsername(username); }
     
     /**
      * @return the username
      */
     public final String getUsername() { return username; }
+    
+    public static String sanitizeUsername(String username) {
+        return username.replaceAll(cleanRegex, "");
+    }
+    
+    public static boolean isSanitizedUsername(String username) {
+        return !username.matches(cleanRegex);
+    }
     
     /**
      * @return the winCount
